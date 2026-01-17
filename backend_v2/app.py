@@ -148,7 +148,7 @@ def login():
     
     try:
         conn = get_db_connection()
-        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur = conn.cursor(row_factory=dict_row)
         
         cur.execute('SELECT id, username, password_hash FROM users WHERE username = %s', (username,))
         user = cur.fetchone()
