@@ -1,0 +1,218 @@
+/* VaultX Content Script Styles */
+
+.vaultx-prompt {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 2147483647;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    animation: vaultx-slide-in 0.3s ease-out;
+}
+
+@keyframes vaultx-slide-in {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.vaultx-prompt-content {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2), 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    min-width: 320px;
+    max-width: 400px;
+    position: relative;
+}
+
+.vaultx-prompt-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 12px;
+    padding-right: 30px;
+}
+
+.vaultx-prompt-message {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 16px;
+    word-break: break-word;
+}
+
+.vaultx-prompt-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.vaultx-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex: 1;
+    min-width: 80px;
+}
+
+.vaultx-btn-primary {
+    background: #0B2F9F;
+    color: white;
+}
+
+.vaultx-btn-primary:hover {
+    background: #082270;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(11, 47, 159, 0.3);
+}
+
+.vaultx-btn-secondary {
+    background: #f0f0f0;
+    color: #333;
+}
+
+.vaultx-btn-secondary:hover {
+    background: #e0e0e0;
+}
+
+.vaultx-btn-danger {
+    background: #dc3545;
+    color: white;
+}
+
+.vaultx-btn-danger:hover {
+    background: #c82333;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+.vaultx-close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #999;
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.vaultx-close-btn:hover {
+    background: #f0f0f0;
+    color: #333;
+}
+
+/* Auto-fill selection */
+.vaultx-autofill .vaultx-credential-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.vaultx-credential-item {
+    padding: 12px;
+    margin: 4px 0;
+    background: #f8f9fa;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 14px;
+    color: #333;
+}
+
+.vaultx-credential-item:hover {
+    background: #e6f2ff;
+    transform: translateX(4px);
+}
+
+/* Toast notifications */
+.vaultx-toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 2147483647;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.3s ease;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.vaultx-toast-show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.vaultx-toast-success {
+    background: #28a745;
+    color: white;
+}
+
+.vaultx-toast-error {
+    background: #dc3545;
+    color: white;
+}
+
+.vaultx-toast-info {
+    background: #17a2b8;
+    color: white;
+}
+
+/* Scrollbar styling for credential list */
+.vaultx-credential-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.vaultx-credential-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.vaultx-credential-list::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+}
+
+.vaultx-credential-list::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+    .vaultx-prompt {
+        right: 10px;
+        left: 10px;
+        top: 10px;
+    }
+    
+    .vaultx-prompt-content {
+        min-width: auto;
+        max-width: none;
+    }
+    
+    .vaultx-prompt-buttons {
+        flex-direction: column;
+    }
+    
+    .vaultx-btn {
+        width: 100%;
+    }
+}

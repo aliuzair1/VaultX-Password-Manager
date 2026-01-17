@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VaultX</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Login View -->
+        <div id="loginView" class="view">
+            <div class="header">
+                <img src="icons/icon48.png" class="logo-icon" alt="VaultX">
+                <h1>VaultX</h1>
+                <p class="subtitle">Secure Password Manager</p>
+            </div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <input type="text" id="loginUsername" placeholder="Username" required>
+                </div>
+                <div class="form-group">
+                    <input type="password" id="loginPassword" placeholder="Password" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Login</button>
+                <div id="loginError" class="error-message"></div>
+            </form>
+            <div class="footer-link">
+                <a href="#" id="openDashboard">Open Dashboard</a>
+            </div>
+        </div>
+
+        <!-- Main View (After Login) -->
+        <div id="mainView" class="view" style="display: none;">
+            <div class="header">
+                <img src="icons/icon48.png" class="logo-icon" alt="VaultX">
+                <h1>VaultX</h1>
+                <div class="user-info">
+                    <span id="currentUsername"></span>
+                    <button id="logoutBtn" class="btn-icon" title="Logout">🚪</button>
+                </div>
+            </div>
+
+            <!-- Manual Add Credential Form -->
+            <div class="section">
+                <h3>Add Credential</h3>
+                <form id="addCredentialForm">
+                    <div class="form-group">
+                        <input type="text" id="websiteUrl" placeholder="Website URL" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" id="websiteName" placeholder="Website Name (optional)">
+                    </div>
+                    <div class="form-group">
+                        <input type="text" id="credUsername" placeholder="Username" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="password" id="credPassword" placeholder="Password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Save Credential</button>
+                </form>
+                <div id="addCredentialMessage" class="message"></div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="section">
+                <h3>Quick Actions</h3>
+                <button id="openDashboardMain" class="btn btn-secondary btn-block">
+                    📊 Open Dashboard
+                </button>
+                <button id="generatePasswordBtn" class="btn btn-secondary btn-block">
+                    🔑 Generate Password
+                </button>
+            </div>
+
+            <!-- Generated Password Display -->
+            <div id="generatedPasswordSection" class="section" style="display: none;">
+                <div class="generated-password">
+                    <input type="text" id="generatedPassword" readonly>
+                    <button id="copyGeneratedPassword" class="btn-icon" title="Copy">📋</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Password Vault</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="pm_styles.css">
+    <script defer src="pm_node.js"></script>
+</head>
+<body>
+    <div class="password-vault">
+        <div class="vault-header-section">
+            <h2 class="vault-header">Password Vault</h2>
+            <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+        </div>
+
+        <div class="action-buttons">
+            <button id="addCredentialBtn" class="btn btn-primary">➕ Add Credential</button>
+            <button id="generatePasswordBtn" class="btn btn-secondary">🔑 Generate Password</button>
+            <button id="manageExcludedBtn" class="btn btn-secondary">🚫 Excluded Sites</button>
+        </div>
+
+        <!-- Add Credential Modal -->
+        <div id="addCredentialModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h3>Add New Credential</h3>
+                <form id="addCredentialForm">
+                    <div class="form-group">
+                        <label>Website URL *</label>
+                        <input type="text" id="modalWebsiteUrl" placeholder="https://example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Website Name</label>
+                        <input type="text" id="modalWebsiteName" placeholder="Example Website">
+                    </div>
+                    <div class="form-group">
+                        <label>Username *</label>
+                        <input type="text" id="modalUsername" placeholder="user@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password *</label>
+                        <input type="password" id="modalPassword" placeholder="Enter password" required>
+                    </div>
+                    <div class="modal-buttons">
+                        <button type="submit" class="btn btn-primary">Save Credential</button>
+                        <button type="button" class="btn btn-secondary" id="cancelAddBtn">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Excluded Sites Modal -->
+        <div id="excludedSitesModal" class="modal">
+            <div class="modal-content">
+                <span class="close-excluded">&times;</span>
+                <h3>Excluded Sites</h3>
+                <div id="excludedSitesList"></div>
+            </div>
+        </div>
+
+        <!-- Generated Password Display -->
+        <div id="generatedPasswordContainer" style="display: none;">
+            <p>Generated Password:</p>
+            <div class="generated-password-wrapper">
+                <input type="text" id="generatedPassword" readonly>
+                <button class="btn copy-btn" onclick="passwordManager.copyGeneratedPassword()">Copy</button>
+            </div>
+        </div>
+
+        <div class="vault-content">
+            <div id="credentialsList" class="credentials-list">
+                <div class="loading">Loading credentials...</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

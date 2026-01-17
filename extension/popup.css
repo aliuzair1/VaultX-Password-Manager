@@ -1,0 +1,210 @@
+/* VaultX Extension Popup Styles */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    width: 360px;
+    min-height: 400px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: #f5f5f5;
+}
+
+#app {
+    background: white;
+}
+
+.view {
+    padding: 20px;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.logo-icon {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 10px;
+}
+
+h1 {
+    font-size: 24px;
+    color: #0B2F9F;
+    margin-bottom: 5px;
+}
+
+.subtitle {
+    font-size: 12px;
+    color: #666;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+    font-size: 14px;
+    color: #333;
+}
+
+.form-group {
+    margin-bottom: 12px;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: border-color 0.2s ease;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #0B2F9F;
+}
+
+.btn {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    background: #0B2F9F;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #082270;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(11, 47, 159, 0.3);
+}
+
+.btn-secondary {
+    background: #f0f0f0;
+    color: #333;
+}
+
+.btn-secondary:hover {
+    background: #e0e0e0;
+}
+
+.btn-block {
+    width: 100%;
+    margin-bottom: 8px;
+}
+
+.btn-icon {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+.btn-icon:hover {
+    background: #f0f0f0;
+}
+
+.section {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.section h3 {
+    font-size: 14px;
+    color: #333;
+    margin-bottom: 12px;
+    font-weight: 600;
+}
+
+.error-message {
+    color: #dc3545;
+    font-size: 12px;
+    margin-top: 8px;
+    text-align: center;
+}
+
+.message {
+    font-size: 12px;
+    margin-top: 8px;
+    padding: 8px;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.message.success {
+    background: #d4edda;
+    color: #155724;
+}
+
+.message.error {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.footer-link {
+    text-align: center;
+    margin-top: 15px;
+}
+
+.footer-link a {
+    color: #0B2F9F;
+    text-decoration: none;
+    font-size: 12px;
+}
+
+.footer-link a:hover {
+    text-decoration: underline;
+}
+
+.generated-password {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.generated-password input {
+    flex: 1;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: monospace;
+    background: #f8f9fa;
+}
+
+/* Scrollbar */
+body::-webkit-scrollbar {
+    width: 6px;
+}
+
+body::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+body::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+}
+
+body::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
