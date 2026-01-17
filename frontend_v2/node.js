@@ -1,7 +1,7 @@
 // API Configuration
 const API_BASE_URL = window.location.hostname === 'localhost'
     ? 'http://localhost:5000/api'
-    : 'https://vrhaoyicgurovmddmtxq.supabase.co/api';
+    : 'vaultx-password-manager-production.up.railway.app/api';
 
 async function makeAPIRequest(endpoint, options = {}) {
     const token = sessionStorage.getItem('token');
