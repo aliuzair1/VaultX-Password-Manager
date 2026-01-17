@@ -8,8 +8,8 @@ from flask_cors import CORS
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.backends import default_backend
 import base64
-import psycopg2
-from psycopg2.extras import RealDictCursor
+import psycopg
+from psycopg.rows import dict_row
 from dotenv import load_dotenv
 from urllib.parse import urlparse
 
@@ -24,7 +24,7 @@ app.config['DATABASE_URL'] = os.getenv('DATABASE_URL')
 
 # Database connection
 def get_db_connection():
-    conn = psycopg2.connect(app.config['DATABASE_URL'])
+    conn = psycopg.connect(app.config['DATABASE_URL'], row_factory=dict_row)
     return conn
 
 # Encryption utilities
