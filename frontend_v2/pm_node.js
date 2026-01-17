@@ -1,7 +1,7 @@
 // API Configuration
-const API_BASE_URL = window.location.hostname === 'localhost' 
+const API_BASE_URL = window.location.hostname === 'localhost'
     ? 'http://localhost:5000/api'
-    : 'https://your-backend-url.com/api'; // Update with your backend URL
+    : 'https://vrhaoyicgurovmddmtxq.supabase.co/api';
 
 async function makeAPIRequest(endpoint, options = {}) {
     const token = sessionStorage.getItem('token');
@@ -9,22 +9,22 @@ async function makeAPIRequest(endpoint, options = {}) {
         'Content-Type': 'application/json',
         ...options.headers
     };
-    
+
     if (token) {
         headers['Authorization'] = `Bearer ${token}`;
     }
-    
+
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         ...options,
         headers
     });
-    
+
     if (response.status === 401) {
         sessionStorage.clear();
         window.location.href = 'index.html';
         throw new Error('Unauthorized');
     }
-    
+
     return response;
 }
 
@@ -43,7 +43,7 @@ class PasswordManager {
             window.location.href = 'index.html';
             return;
         }
-        
+
         try {
             const response = await makeAPIRequest('/auth/verify');
             if (!response.ok) {
@@ -59,24 +59,24 @@ class PasswordManager {
     initEventListeners() {
         // Logout button
         document.getElementById('logoutBtn').addEventListener('click', () => this.logout());
-        
+
         // Add credential button
         document.getElementById('addCredentialBtn').addEventListener('click', () => this.showAddCredentialModal());
-        
+
         // Generate password button
         document.getElementById('generatePasswordBtn').addEventListener('click', () => this.generateAndDisplayPassword());
-        
+
         // Manage excluded sites button
         document.getElementById('manageExcludedBtn').addEventListener('click', () => this.showExcludedSitesModal());
-        
+
         // Modal close buttons
         document.querySelector('.close').addEventListener('click', () => this.closeAddCredentialModal());
         document.querySelector('.close-excluded').addEventListener('click', () => this.closeExcludedSitesModal());
         document.getElementById('cancelAddBtn').addEventListener('click', () => this.closeAddCredentialModal());
-        
+
         // Add credential form
         document.getElementById('addCredentialForm').addEventListener('submit', (e) => this.handleAddCredential(e));
-        
+
         // Close modals on outside click
         window.addEventListener('click', (e) => {
             const addModal = document.getElementById('addCredentialModal');
@@ -115,17 +115,17 @@ class PasswordManager {
 
     async handleAddCredential(e) {
         e.preventDefault();
-        
+
         let websiteUrl = document.getElementById('modalWebsiteUrl').value.trim();
         const websiteName = document.getElementById('modalWebsiteName').value.trim();
         const username = document.getElementById('modalUsername').value.trim();
         const password = document.getElementById('modalPassword').value;
-        
+
         // Add https:// if missing
         if (!websiteUrl.startsWith('http://') && !websiteUrl.startsWith('https://')) {
             websiteUrl = 'https://' + websiteUrl;
         }
-        
+
         try {
             const response = await makeAPIRequest('/credentials/save', {
                 method: 'POST',
@@ -136,9 +136,9 @@ class PasswordManager {
                     password: password
                 })
             });
-            
+
             const data = await response.json();
-            
+
             if (response.ok) {
                 alert(data.message || 'Credential saved successfully!');
                 this.closeAddCredentialModal();
@@ -156,7 +156,7 @@ class PasswordManager {
         try {
             const response = await makeAPIRequest('/credentials/list');
             const data = await response.json();
-            
+
             if (response.ok) {
                 this.credentials = data.credentials;
                 this.renderCredentials();
@@ -172,12 +172,12 @@ class PasswordManager {
     renderCredentials() {
         const listContainer = document.getElementById('credentialsList');
         listContainer.innerHTML = '';
-        
+
         if (this.credentials.length === 0) {
             listContainer.innerHTML = '<div class="no-credentials">No credentials saved yet. Click "Add Credential" to get started.</div>';
             return;
         }
-        
+
         this.credentials.forEach(cred => {
             const credCard = this.createCredentialCard(cred);
             listContainer.appendChild(credCard);
@@ -187,9 +187,9 @@ class PasswordManager {
     createCredentialCard(cred) {
         const card = document.createElement('div');
         card.className = 'credential-card';
-        
+
         const favicon = this.getFaviconUrl(cred.websiteUrl);
-        
+
         card.innerHTML = `
             <div class="credential-header">
                 <img src="${favicon}" class="website-favicon" alt="favicon" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌐</text></svg>'">
@@ -214,7 +214,7 @@ class PasswordManager {
                 <button class="btn btn-small btn-danger" onclick="passwordManager.deleteCredential(${cred.id})">🗑️ Delete</button>
             </div>
         `;
-        
+
         return card;
     }
 
@@ -245,12 +245,12 @@ class PasswordManager {
         try {
             const response = await makeAPIRequest(`/credentials/decrypt/${credId}`);
             const data = await response.json();
-            
+
             if (response.ok) {
                 const passwordElement = document.getElementById(`password-${credId}`);
                 passwordElement.textContent = data.password;
                 passwordElement.classList.remove('password-hidden');
-                
+
                 // Hide again after 30 seconds
                 setTimeout(() => {
                     passwordElement.textContent = '••••••••';
@@ -269,7 +269,7 @@ class PasswordManager {
         try {
             const response = await makeAPIRequest(`/credentials/decrypt/${credId}`);
             const data = await response.json();
-            
+
             if (response.ok) {
                 await navigator.clipboard.writeText(data.password);
                 alert('Password copied to clipboard!');
@@ -286,12 +286,12 @@ class PasswordManager {
         if (!confirm('Are you sure you want to delete this credential?')) {
             return;
         }
-        
+
         try {
             const response = await makeAPIRequest(`/credentials/delete/${credId}`, {
                 method: 'DELETE'
             });
-            
+
             if (response.ok) {
                 alert('Credential deleted successfully');
                 await this.loadCredentials();
@@ -309,7 +309,7 @@ class PasswordManager {
         try {
             const response = await makeAPIRequest('/excluded-sites/list');
             const data = await response.json();
-            
+
             if (response.ok) {
                 this.excludedSites = data.excludedSites;
                 this.renderExcludedSites();
@@ -325,12 +325,12 @@ class PasswordManager {
     renderExcludedSites() {
         const listContainer = document.getElementById('excludedSitesList');
         listContainer.innerHTML = '';
-        
+
         if (this.excludedSites.length === 0) {
             listContainer.innerHTML = '<div class="no-excluded">No excluded sites</div>';
             return;
         }
-        
+
         this.excludedSites.forEach(site => {
             const siteItem = document.createElement('div');
             siteItem.className = 'excluded-site-item';
@@ -347,7 +347,7 @@ class PasswordManager {
             const response = await makeAPIRequest(`/excluded-sites/remove/${siteId}`, {
                 method: 'DELETE'
             });
-            
+
             if (response.ok) {
                 await this.loadExcludedSites();
             } else {
@@ -364,11 +364,11 @@ class PasswordManager {
         try {
             const response = await makeAPIRequest('/password/generate');
             const data = await response.json();
-            
+
             if (response.ok) {
                 const container = document.getElementById('generatedPasswordContainer');
                 const input = document.getElementById('generatedPassword');
-                
+
                 container.style.display = 'block';
                 input.value = data.password;
             } else {

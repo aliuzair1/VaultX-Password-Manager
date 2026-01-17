@@ -1,7 +1,7 @@
 // API Configuration
-const API_BASE_URL = window.location.hostname === 'localhost' 
+const API_BASE_URL = window.location.hostname === 'localhost'
     ? 'http://localhost:5000/api'
-    : 'https://your-backend-url.onrender.com/api'; // Update with your backend URL
+    : 'https://vrhaoyicgurovmddmtxq.supabase.co/api';
 
 async function makeAPIRequest(endpoint, options = {}) {
     const token = sessionStorage.getItem('token');
@@ -9,37 +9,37 @@ async function makeAPIRequest(endpoint, options = {}) {
         'Content-Type': 'application/json',
         ...options.headers
     };
-    
+
     if (token) {
         headers['Authorization'] = `Bearer ${token}`;
     }
-    
+
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         ...options,
         headers
     });
-    
+
     return response;
 }
 
-document.querySelector('form').addEventListener('submit', async function(event) {
+document.querySelector('form').addEventListener('submit', async function (event) {
     event.preventDefault();
     const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
-    
+
     if (!username || !password) {
         alert('Please fill in all fields');
         return;
     }
-    
+
     try {
         const response = await makeAPIRequest('/auth/login', {
             method: 'POST',
             body: JSON.stringify({ username, password })
         });
-        
+
         const data = await response.json();
-        
+
         if (response.ok) {
             sessionStorage.setItem('token', data.token);
             sessionStorage.setItem('authenticated', 'true');
@@ -55,7 +55,7 @@ document.querySelector('form').addEventListener('submit', async function(event) 
     }
 });
 
-window.addEventListener('load', async function() {
+window.addEventListener('load', async function () {
     const token = sessionStorage.getItem('token');
     if (token) {
         try {
