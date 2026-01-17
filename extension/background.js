@@ -1,6 +1,6 @@
 // VaultX Background Service Worker
 
-const API_BASE_URL = 'https://your-backend-url.com/api'; // Update with your backend URL
+const API_BASE_URL = 'https://vaultx-password-manager-production.up.railway.app/api';
 
 // Listen for messages from popup and content scripts
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -10,14 +10,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             .catch(error => sendResponse({ success: false, error: error.message }));
         return true; // Keep channel open for async response
     }
-    
+
     if (request.action === 'logout') {
         handleLogout()
             .then(sendResponse)
             .catch(error => sendResponse({ success: false, error: error.message }));
         return true;
     }
-    
+
     if (request.action === 'checkAuth') {
         checkAuth()
             .then(sendResponse)
@@ -35,16 +35,16 @@ async function handleLogin(credentials) {
             },
             body: JSON.stringify(credentials)
         });
-        
+
         const data = await response.json();
-        
+
         if (response.ok) {
             // Store token in chrome.storage
             await chrome.storage.local.set({
                 vaultx_token: data.token,
                 vaultx_username: data.username
             });
-            
+
             return { success: true, username: data.username };
         } else {
             return { success: false, error: data.error || 'Login failed' };
@@ -68,22 +68,22 @@ async function handleLogout() {
 async function checkAuth() {
     try {
         const result = await chrome.storage.local.get(['vaultx_token', 'vaultx_username']);
-        
+
         if (!result.vaultx_token) {
             return { authenticated: false };
         }
-        
+
         // Verify token with backend
         const response = await fetch(`${API_BASE_URL}/auth/verify`, {
             headers: {
                 'Authorization': `Bearer ${result.vaultx_token}`
             }
         });
-        
+
         if (response.ok) {
-            return { 
-                authenticated: true, 
-                username: result.vaultx_username 
+            return {
+                authenticated: true,
+                username: result.vaultx_username
             };
         } else {
             // Token invalid, clear storage

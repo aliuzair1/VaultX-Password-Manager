@@ -1,6 +1,6 @@
 // VaultX Content Script - Form Detection, Auto-Fill, and Save Prompt
 
-const API_BASE_URL = 'https://your-backend-url.com/api'; // Update with your backend URL
+const API_BASE_URL = 'https://vaultx-password-manager-production.up.railway.app/api';
 
 class VaultXContentScript {
     constructor() {
@@ -13,7 +13,7 @@ class VaultXContentScript {
     async init() {
         // Get token from storage
         this.token = await this.getToken();
-        
+
         if (!this.token) {
             console.log('VaultX: Not logged in');
             return;
@@ -55,7 +55,7 @@ class VaultXContentScript {
                 },
                 body: JSON.stringify({ website_url: window.location.href })
             });
-            
+
             if (response.ok) {
                 const data = await response.json();
                 return data.excluded;
@@ -104,17 +104,17 @@ class VaultXContentScript {
         const container = document.createElement('div');
         container.id = 'vaultx-autofill-prompt';
         container.className = 'vaultx-prompt vaultx-autofill';
-        
+
         const content = document.createElement('div');
         content.className = 'vaultx-prompt-content';
-        
+
         const title = document.createElement('div');
         title.className = 'vaultx-prompt-title';
         title.textContent = '🔐 VaultX - Select Account';
-        
+
         const list = document.createElement('div');
         list.className = 'vaultx-credential-list';
-        
+
         credentials.forEach(cred => {
             const item = document.createElement('div');
             item.className = 'vaultx-credential-item';
@@ -125,35 +125,35 @@ class VaultXContentScript {
             };
             list.appendChild(item);
         });
-        
+
         const closeBtn = document.createElement('button');
         closeBtn.className = 'vaultx-close-btn';
         closeBtn.textContent = '×';
         closeBtn.onclick = () => container.remove();
-        
+
         content.appendChild(title);
         content.appendChild(list);
         content.appendChild(closeBtn);
         container.appendChild(content);
-        
+
         return container;
     }
 
     fillForm(credential) {
         const forms = document.querySelectorAll('form');
-        
+
         for (const form of forms) {
             const usernameField = this.findUsernameField(form);
             const passwordField = this.findPasswordField(form);
-            
+
             if (usernameField && passwordField) {
                 usernameField.value = credential.username;
                 passwordField.value = credential.password;
-                
+
                 // Trigger input events for React/Vue forms
                 this.triggerInputEvent(usernameField);
                 this.triggerInputEvent(passwordField);
-                
+
                 console.log('VaultX: Credentials auto-filled');
                 break;
             }
@@ -169,12 +169,12 @@ class VaultXContentScript {
 
     attachFormListeners() {
         const forms = document.querySelectorAll('form');
-        
+
         forms.forEach(form => {
             // Avoid duplicate listeners
             if (form.dataset.vaultxListening) return;
             form.dataset.vaultxListening = 'true';
-            
+
             form.addEventListener('submit', (e) => {
                 this.captureFormData(form);
             });
@@ -275,45 +275,45 @@ class VaultXContentScript {
         const prompt = document.createElement('div');
         prompt.id = 'vaultx-save-prompt';
         prompt.className = 'vaultx-prompt vaultx-save';
-        
+
         const content = document.createElement('div');
         content.className = 'vaultx-prompt-content';
-        
+
         const title = document.createElement('div');
         title.className = 'vaultx-prompt-title';
         title.textContent = '🔐 Save password in VaultX?';
-        
+
         const message = document.createElement('div');
         message.className = 'vaultx-prompt-message';
         message.textContent = `${this.capturedCredentials.username} on ${this.currentDomain}`;
-        
+
         const buttons = document.createElement('div');
         buttons.className = 'vaultx-prompt-buttons';
-        
+
         const saveBtn = document.createElement('button');
         saveBtn.className = 'vaultx-btn vaultx-btn-primary';
         saveBtn.textContent = 'Save';
         saveBtn.onclick = () => this.saveCredentials();
-        
+
         const neverBtn = document.createElement('button');
         neverBtn.className = 'vaultx-btn vaultx-btn-danger';
         neverBtn.textContent = 'Never for this site';
         neverBtn.onclick = () => this.excludeSite();
-        
+
         const notNowBtn = document.createElement('button');
         notNowBtn.className = 'vaultx-btn vaultx-btn-secondary';
         notNowBtn.textContent = 'Not now';
         notNowBtn.onclick = () => prompt.remove();
-        
+
         buttons.appendChild(saveBtn);
         buttons.appendChild(neverBtn);
         buttons.appendChild(notNowBtn);
-        
+
         content.appendChild(title);
         content.appendChild(message);
         content.appendChild(buttons);
         prompt.appendChild(content);
-        
+
         document.body.appendChild(prompt);
 
         // Auto-remove after 30 seconds
@@ -336,7 +336,7 @@ class VaultXContentScript {
             });
 
             const prompt = document.getElementById('vaultx-save-prompt');
-            
+
             if (response.ok) {
                 this.showSuccessMessage('Password saved successfully!');
                 if (prompt) prompt.remove();
@@ -362,7 +362,7 @@ class VaultXContentScript {
             });
 
             const prompt = document.getElementById('vaultx-save-prompt');
-            
+
             if (response.ok) {
                 this.showSuccessMessage('Site added to exclusion list');
                 if (prompt) prompt.remove();
@@ -387,11 +387,11 @@ class VaultXContentScript {
         const toast = document.createElement('div');
         toast.className = `vaultx-toast vaultx-toast-${type}`;
         toast.textContent = message;
-        
+
         document.body.appendChild(toast);
-        
+
         setTimeout(() => toast.classList.add('vaultx-toast-show'), 100);
-        
+
         setTimeout(() => {
             toast.classList.remove('vaultx-toast-show');
             setTimeout(() => toast.remove(), 300);

@@ -1,7 +1,7 @@
 // VaultX Extension Popup Script
 
-const API_BASE_URL = 'https://your-backend-url.com/api'; // Update with your backend URL
-const DASHBOARD_URL = 'https://your-frontend-url.com/pm.html'; // Update with your frontend URL
+const API_BASE_URL = 'https://vaultx-password-manager-production.up.railway.app/api';
+const DASHBOARD_URL = 'https://https://vault-x-password-manager.vercel.app';
 
 let currentToken = null;
 
@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function checkAuthentication() {
     const response = await chrome.runtime.sendMessage({ action: 'checkAuth' });
-    
+
     if (response.authenticated) {
         currentToken = await getToken();
         showMainView(response.username);
@@ -36,43 +36,43 @@ function showMainView(username) {
 function setupEventListeners() {
     // Login form
     document.getElementById('loginForm').addEventListener('submit', handleLogin);
-    
+
     // Logout button
     document.getElementById('logoutBtn').addEventListener('click', handleLogout);
-    
+
     // Add credential form
     document.getElementById('addCredentialForm').addEventListener('submit', handleAddCredential);
-    
+
     // Open dashboard links
     document.getElementById('openDashboard').addEventListener('click', openDashboard);
     document.getElementById('openDashboardMain').addEventListener('click', openDashboard);
-    
+
     // Generate password
     document.getElementById('generatePasswordBtn').addEventListener('click', handleGeneratePassword);
-    
+
     // Copy generated password
     document.getElementById('copyGeneratedPassword').addEventListener('click', copyGeneratedPassword);
 }
 
 async function handleLogin(e) {
     e.preventDefault();
-    
+
     const username = document.getElementById('loginUsername').value.trim();
     const password = document.getElementById('loginPassword').value;
     const errorDiv = document.getElementById('loginError');
-    
+
     errorDiv.textContent = '';
-    
+
     if (!username || !password) {
         errorDiv.textContent = 'Please fill in all fields';
         return;
     }
-    
+
     const response = await chrome.runtime.sendMessage({
         action: 'login',
         data: { username, password }
     });
-    
+
     if (response.success) {
         currentToken = await getToken();
         showMainView(response.username);
@@ -84,7 +84,7 @@ async function handleLogin(e) {
 
 async function handleLogout() {
     const response = await chrome.runtime.sendMessage({ action: 'logout' });
-    
+
     if (response.success) {
         currentToken = null;
         showLoginView();
@@ -94,28 +94,28 @@ async function handleLogout() {
 
 async function handleAddCredential(e) {
     e.preventDefault();
-    
+
     const websiteUrl = document.getElementById('websiteUrl').value.trim();
     const websiteName = document.getElementById('websiteName').value.trim();
     const username = document.getElementById('credUsername').value.trim();
     const password = document.getElementById('credPassword').value;
     const messageDiv = document.getElementById('addCredentialMessage');
-    
+
     messageDiv.textContent = '';
     messageDiv.className = 'message';
-    
+
     if (!websiteUrl || !username || !password) {
         messageDiv.textContent = 'Please fill in required fields';
         messageDiv.classList.add('error');
         return;
     }
-    
+
     // Add https:// if missing
     let fullUrl = websiteUrl;
     if (!websiteUrl.startsWith('http://') && !websiteUrl.startsWith('https://')) {
         fullUrl = 'https://' + websiteUrl;
     }
-    
+
     try {
         const response = await fetch(`${API_BASE_URL}/credentials/save`, {
             method: 'POST',
@@ -130,14 +130,14 @@ async function handleAddCredential(e) {
                 password: password
             })
         });
-        
+
         const data = await response.json();
-        
+
         if (response.ok) {
             messageDiv.textContent = data.message || 'Credential saved successfully!';
             messageDiv.classList.add('success');
             document.getElementById('addCredentialForm').reset();
-            
+
             // Clear message after 3 seconds
             setTimeout(() => {
                 messageDiv.textContent = '';
@@ -161,9 +161,9 @@ async function handleGeneratePassword() {
                 'Authorization': `Bearer ${currentToken}`
             }
         });
-        
+
         const data = await response.json();
-        
+
         if (response.ok) {
             document.getElementById('generatedPassword').value = data.password;
             document.getElementById('generatedPasswordSection').style.display = 'block';
@@ -180,7 +180,7 @@ function copyGeneratedPassword() {
     const passwordInput = document.getElementById('generatedPassword');
     passwordInput.select();
     document.execCommand('copy');
-    
+
     // Show feedback
     const btn = document.getElementById('copyGeneratedPassword');
     const originalText = btn.textContent;
