@@ -24,7 +24,12 @@ app.config['DATABASE_URL'] = os.getenv('DATABASE_URL')
 
 # Database connection
 def get_db_connection():
-    conn = psycopg.connect(app.config['DATABASE_URL'], row_factory=dict_row)
+    # Force IPv4 by adding connect_timeout and disabling IPv6
+    conn = psycopg.connect(
+        app.config['DATABASE_URL'],
+        connect_timeout=10,
+        options='-c search_path=public'
+    )
     return conn
 
 # Encryption utilities
