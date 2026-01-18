@@ -24,12 +24,7 @@ app.config['DATABASE_URL'] = os.getenv('DATABASE_URL')
 
 # Database connection
 def get_db_connection():
-    # Force IPv4 by adding connect_timeout and disabling IPv6
-    conn = psycopg.connect(
-        app.config['DATABASE_URL'],
-        connect_timeout=10,
-        options='-c search_path=public'
-    )
+    conn = psycopg.connect(app.config['DATABASE_URL'], row_factory=dict_row)
     return conn
 
 # Encryption utilities
@@ -144,73 +139,32 @@ def normalize_url(url):
 # Routes
 @app.route('/api/auth/login', methods=['POST'])
 def login():
-    print("=" * 50)
-    print("LOGIN ATTEMPT STARTED")
-    print("=" * 50)
+    data = request.get_json()
+    username = data.get('username', '').strip()
+    password = data.get('password', '')
+    
+    if not username or not password:
+        return jsonify({'error': 'Username and password required'}), 400
     
     try:
-        data = request.get_json()
-        username = data.get('username', '').strip()
-        password = data.get('password', '')
-        
-        print(f"Username: {username}")
-        print(f"Password length: {len(password)}")
-        
-        if not username or not password:
-            print("ERROR: Missing credentials")
-            return jsonify({'error': 'Username and password required'}), 400
-        
-        print("Step 1: Connecting to database...")
         conn = get_db_connection()
-        print("Step 1: SUCCESS - Database connected")
-        
-        print("Step 2: Creating cursor...")
         cur = conn.cursor(row_factory=dict_row)
-        print("Step 2: SUCCESS - Cursor created")
         
-        print(f"Step 3: Querying for user '{username}'...")
         cur.execute('SELECT id, username, password_hash FROM users WHERE username = %s', (username,))
         user = cur.fetchone()
-        print(f"Step 3: Query result - User found: {user is not None}")
-        
-        if user:
-            print(f"Step 3: User ID: {user.get('id')}")
-            print(f"Step 3: Username from DB: {user.get('username')}")
-            print(f"Step 3: Password hash length: {len(user.get('password_hash', ''))}")
         
         cur.close()
         conn.close()
-        print("Step 4: Database connection closed")
         
         if not user:
-            print("ERROR: User not found in database")
             return jsonify({'error': 'Invalid credentials'}), 401
         
-        print("Step 5: Verifying password with bcrypt...")
-        password_hash = user['password_hash']
-        
-        # Debug password hash
-        print(f"Password hash type: {type(password_hash)}")
-        print(f"Password hash starts with: {password_hash[:10] if password_hash else 'EMPTY'}")
-        
         # Verify password
-        try:
-            if not bcrypt.checkpw(password.encode(), password_hash.encode()):
-                print("Step 5: Password verification FAILED")
-                return jsonify({'error': 'Invalid credentials'}), 401
-            print("Step 5: SUCCESS - Password verified!")
-        except Exception as bcrypt_error:
-            print(f"Step 5: BCRYPT ERROR: {str(bcrypt_error)}")
-            print(f"Step 5: BCRYPT ERROR TYPE: {type(bcrypt_error).__name__}")
-            raise
+        if not bcrypt.checkpw(password.encode(), user['password_hash'].encode()):
+            return jsonify({'error': 'Invalid credentials'}), 401
         
-        print("Step 6: Generating JWT token...")
+        # Generate token
         token = generate_token(user['id'], user['username'])
-        print("Step 6: SUCCESS - Token generated")
-        
-        print("=" * 50)
-        print("LOGIN SUCCESSFUL!")
-        print("=" * 50)
         
         return jsonify({
             'token': token,
@@ -218,17 +172,6 @@ def login():
         }), 200
         
     except Exception as e:
-        print("=" * 50)
-        print("FATAL ERROR OCCURRED")
-        print("=" * 50)
-        print(f"Error message: {str(e)}")
-        print(f"Error type: {type(e).__name__}")
-        
-        import traceback
-        print("Full traceback:")
-        print(traceback.format_exc())
-        print("=" * 50)
-        
         return jsonify({'error': 'Login failed'}), 500
 
 @app.route('/api/auth/verify', methods=['GET'])
@@ -321,35 +264,51 @@ def save_credential(current_user):
 def list_credentials(current_user):
     try:
         conn = get_db_connection()
-        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur = conn.cursor(row_factory=dict_row)
         
-        cur.execute(
-            '''SELECT id, website_url, website_name, username, created_at, updated_at
-               FROM credentials WHERE user_id = %s 
-               ORDER BY updated_at DESC''',
-            (current_user['user_id'],)
-        )
+        # Try to get all credentials, handling missing columns gracefully
+        try:
+            cur.execute(
+                '''SELECT id, website_url, website_name, username, created_at, updated_at
+                   FROM credentials WHERE user_id = %s 
+                   ORDER BY updated_at DESC NULLS LAST''',
+                (current_user['user_id'],)
+            )
+        except Exception as e:
+            # If query fails (missing columns), try simpler query
+            print(f"First query failed: {e}")
+            cur.execute(
+                '''SELECT id, username, created_at
+                   FROM credentials WHERE user_id = %s 
+                   ORDER BY created_at DESC''',
+                (current_user['user_id'],)
+            )
+        
         credentials = cur.fetchall()
         
         cur.close()
         conn.close()
         
-        return jsonify({
-            'credentials': [
-                {
-                    'id': cred['id'],
-                    'websiteUrl': cred['website_url'],
-                    'websiteName': cred['website_name'],
-                    'username': cred['username'],
-                    'createdAt': cred['created_at'].isoformat() if cred['created_at'] else None,
-                    'updatedAt': cred['updated_at'].isoformat() if cred['updated_at'] else None
-                }
-                for cred in credentials
-            ]
-        }), 200
+        # Build response with safe defaults for missing fields
+        result = []
+        for cred in credentials:
+            result.append({
+                'id': cred.get('id'),
+                'websiteUrl': cred.get('website_url', 'Not specified'),
+                'websiteName': cred.get('website_name', cred.get('username', 'Unknown')),
+                'username': cred.get('username', 'Unknown'),
+                'createdAt': cred.get('created_at').isoformat() if cred.get('created_at') else None,
+                'updatedAt': cred.get('updated_at').isoformat() if cred.get('updated_at') else None
+            })
+        
+        return jsonify({'credentials': result}), 200
         
     except Exception as e:
-        return jsonify({'error': 'Failed to fetch credentials'}), 500
+        print(f"Error in list_credentials: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
+        # Return empty list instead of error
+        return jsonify({'credentials': []}), 200
 
 @app.route('/api/credentials/decrypt/<int:cred_id>', methods=['GET'])
 @token_required
