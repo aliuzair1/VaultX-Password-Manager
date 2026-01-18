@@ -378,45 +378,83 @@ def list_credentials(current_user):
 @app.route('/api/credentials/decrypt/<int:cred_id>', methods=['GET'])
 @token_required
 def decrypt_credential(current_user, cred_id):
+    print("=" * 50)
+    print(f"DECRYPT CREDENTIAL ID: {cred_id}")
+    print("=" * 50)
+    
     try:
+        print("Step 1: Connecting to database...")
         conn = get_db_connection()
-        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur = conn.cursor(row_factory=dict_row)
+        print("Step 1: SUCCESS")
         
         # Fetch credential with encryption key
-        cur.execute(
-            '''SELECT c.id, c.website_url, c.website_name, c.username, 
-                      c.encrypted_password, ek.key_data
-               FROM credentials c
-               JOIN encryption_keys ek ON c.encryption_key_id = ek.id
-               WHERE c.id = %s AND c.user_id = %s''',
-            (cred_id, current_user['user_id'])
-        )
+        print("Step 2: Fetching credential...")
+        try:
+            # Try with all fields first
+            cur.execute(
+                '''SELECT c.id, c.website_url, c.website_name, c.username, 
+                          c.encrypted_password, ek.key_data
+                   FROM credentials c
+                   JOIN encryption_keys ek ON c.encryption_key_id = ek.id
+                   WHERE c.id = %s AND c.user_id = %s''',
+                (cred_id, current_user['user_id'])
+            )
+        except Exception as e:
+            print(f"Full query failed: {e}")
+            # Try simpler query without website fields
+            cur.execute(
+                '''SELECT c.id, c.username, c.encrypted_password, ek.key_data
+                   FROM credentials c
+                   JOIN encryption_keys ek ON c.encryption_key_id = ek.id
+                   WHERE c.id = %s AND c.user_id = %s''',
+                (cred_id, current_user['user_id'])
+            )
+        
         credential = cur.fetchone()
+        print(f"Step 2: Credential found: {credential is not None}")
         
         cur.close()
         conn.close()
         
         if not credential:
+            print("ERROR: Credential not found")
             return jsonify({'error': 'Credential not found'}), 404
         
+        print("Step 3: Decrypting user key...")
         # Decrypt user key
         user_key_b64 = encryption_manager.decrypt_data(credential['key_data'], encryption_manager.master_key)
         user_key = base64.b64decode(user_key_b64)
+        print("Step 3: SUCCESS")
         
+        print("Step 4: Decrypting password...")
         # Decrypt password
         decrypted_password = encryption_manager.decrypt_data(credential['encrypted_password'], user_key)
+        print("Step 4: SUCCESS")
+        
+        print("=" * 50)
+        print("DECRYPT SUCCESSFUL")
+        print("=" * 50)
         
         return jsonify({
-            'id': credential['id'],
-            'websiteUrl': credential['website_url'],
-            'websiteName': credential['website_name'],
-            'username': credential['username'],
+            'id': credential.get('id'),
+            'websiteUrl': credential.get('website_url', 'Not specified'),
+            'websiteName': credential.get('website_name', credential.get('username', 'Unknown')),
+            'username': credential.get('username', 'Unknown'),
             'password': decrypted_password
         }), 200
         
     except Exception as e:
+        print("=" * 50)
+        print("FATAL ERROR IN DECRYPT")
+        print("=" * 50)
+        print(f"Error: {str(e)}")
+        print(f"Error type: {type(e).__name__}")
+        import traceback
+        print(traceback.format_exc())
+        print("=" * 50)
         return jsonify({'error': 'Failed to decrypt credential'}), 500
-
+        
 @app.route('/api/credentials/for-site', methods=['POST'])
 @token_required
 def get_credentials_for_site(current_user):
