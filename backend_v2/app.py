@@ -139,32 +139,73 @@ def normalize_url(url):
 # Routes
 @app.route('/api/auth/login', methods=['POST'])
 def login():
-    data = request.get_json()
-    username = data.get('username', '').strip()
-    password = data.get('password', '')
-    
-    if not username or not password:
-        return jsonify({'error': 'Username and password required'}), 400
+    print("=" * 50)
+    print("LOGIN ATTEMPT STARTED")
+    print("=" * 50)
     
     try:
-        conn = get_db_connection()
-        cur = conn.cursor(row_factory=dict_row)
+        data = request.get_json()
+        username = data.get('username', '').strip()
+        password = data.get('password', '')
         
+        print(f"Username: {username}")
+        print(f"Password length: {len(password)}")
+        
+        if not username or not password:
+            print("ERROR: Missing credentials")
+            return jsonify({'error': 'Username and password required'}), 400
+        
+        print("Step 1: Connecting to database...")
+        conn = get_db_connection()
+        print("Step 1: SUCCESS - Database connected")
+        
+        print("Step 2: Creating cursor...")
+        cur = conn.cursor(row_factory=dict_row)
+        print("Step 2: SUCCESS - Cursor created")
+        
+        print(f"Step 3: Querying for user '{username}'...")
         cur.execute('SELECT id, username, password_hash FROM users WHERE username = %s', (username,))
         user = cur.fetchone()
+        print(f"Step 3: Query result - User found: {user is not None}")
+        
+        if user:
+            print(f"Step 3: User ID: {user.get('id')}")
+            print(f"Step 3: Username from DB: {user.get('username')}")
+            print(f"Step 3: Password hash length: {len(user.get('password_hash', ''))}")
         
         cur.close()
         conn.close()
+        print("Step 4: Database connection closed")
         
         if not user:
+            print("ERROR: User not found in database")
             return jsonify({'error': 'Invalid credentials'}), 401
+        
+        print("Step 5: Verifying password with bcrypt...")
+        password_hash = user['password_hash']
+        
+        # Debug password hash
+        print(f"Password hash type: {type(password_hash)}")
+        print(f"Password hash starts with: {password_hash[:10] if password_hash else 'EMPTY'}")
         
         # Verify password
-        if not bcrypt.checkpw(password.encode(), user['password_hash'].encode()):
-            return jsonify({'error': 'Invalid credentials'}), 401
+        try:
+            if not bcrypt.checkpw(password.encode(), password_hash.encode()):
+                print("Step 5: Password verification FAILED")
+                return jsonify({'error': 'Invalid credentials'}), 401
+            print("Step 5: SUCCESS - Password verified!")
+        except Exception as bcrypt_error:
+            print(f"Step 5: BCRYPT ERROR: {str(bcrypt_error)}")
+            print(f"Step 5: BCRYPT ERROR TYPE: {type(bcrypt_error).__name__}")
+            raise
         
-        # Generate token
+        print("Step 6: Generating JWT token...")
         token = generate_token(user['id'], user['username'])
+        print("Step 6: SUCCESS - Token generated")
+        
+        print("=" * 50)
+        print("LOGIN SUCCESSFUL!")
+        print("=" * 50)
         
         return jsonify({
             'token': token,
@@ -172,6 +213,17 @@ def login():
         }), 200
         
     except Exception as e:
+        print("=" * 50)
+        print("FATAL ERROR OCCURRED")
+        print("=" * 50)
+        print(f"Error message: {str(e)}")
+        print(f"Error type: {type(e).__name__}")
+        
+        import traceback
+        print("Full traceback:")
+        print(traceback.format_exc())
+        print("=" * 50)
+        
         return jsonify({'error': 'Login failed'}), 500
 
 @app.route('/api/auth/verify', methods=['GET'])
