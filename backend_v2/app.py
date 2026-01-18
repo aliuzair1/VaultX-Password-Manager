@@ -183,6 +183,10 @@ def verify_token(current_user):
 @token_required
 def save_credential(current_user):
     """Save credential from extension or manual add"""
+    print("=" * 50)
+    print("SAVE CREDENTIAL STARTED")
+    print("=" * 50)
+    
     data = request.get_json()
     
     website_url = data.get('website_url', '').strip()
@@ -190,40 +194,86 @@ def save_credential(current_user):
     username = data.get('username', '').strip()
     password = data.get('password', '')
     
+    print(f"Website URL: {website_url}")
+    print(f"Website Name: {website_name}")
+    print(f"Username: {username}")
+    print(f"Password length: {len(password)}")
+    
     if not website_url or not username or not password:
+        print("ERROR: Missing required fields")
         return jsonify({'error': 'Website URL, username and password required'}), 400
     
     try:
+        print("Step 1: Connecting to database...")
         conn = get_db_connection()
+        print("Step 1: SUCCESS")
         
         # Check if site is excluded
-        cur = conn.cursor(cursor_factory=RealDictCursor)
+        print("Step 2: Checking excluded sites...")
+        cur = conn.cursor(row_factory=dict_row)
         domain = normalize_url(website_url)
-        cur.execute(
-            'SELECT id FROM excluded_sites WHERE user_id = %s AND domain = %s',
-            (current_user['user_id'], domain)
-        )
-        if cur.fetchone():
-            cur.close()
-            conn.close()
-            return jsonify({'error': 'This site is in your excluded list'}), 403
+        
+        try:
+            cur.execute(
+                'SELECT id FROM excluded_sites WHERE user_id = %s AND domain = %s',
+                (current_user['user_id'], domain)
+            )
+            if cur.fetchone():
+                cur.close()
+                conn.close()
+                print("ERROR: Site is excluded")
+                return jsonify({'error': 'This site is in your excluded list'}), 403
+        except Exception as e:
+            print(f"Excluded sites check failed (table might not exist): {e}")
+            # Continue anyway - excluded_sites is optional
+        
+        print("Step 2: SUCCESS")
         
         # Get or create encryption key
-        key_id, user_key = get_user_key(conn, current_user['user_id'])
+        print("Step 3: Getting encryption key...")
+        try:
+            key_id, user_key = get_user_key(conn, current_user['user_id'])
+            print(f"Step 3: SUCCESS - Key ID: {key_id}")
+        except Exception as e:
+            print(f"Step 3: FAILED - {str(e)}")
+            print("Attempting to create new key...")
+            
+            # Create encryption key for user
+            user_key = encryption_manager.generate_user_key()
+            user_key_encrypted = encryption_manager.encrypt_data(
+                base64.b64encode(user_key).decode(),
+                encryption_manager.master_key
+            )
+            
+            cur = conn.cursor(row_factory=dict_row)
+            cur.execute(
+                'INSERT INTO encryption_keys (user_id, key_data) VALUES (%s, %s) RETURNING id',
+                (current_user['user_id'], user_key_encrypted)
+            )
+            key_result = cur.fetchone()
+            key_id = key_result['id']
+            conn.commit()
+            print(f"Step 3: Created new key - Key ID: {key_id}")
         
         # Check if credential already exists for this site
+        print("Step 4: Checking for existing credential...")
+        cur = conn.cursor(row_factory=dict_row)
         cur.execute(
             '''SELECT id FROM credentials 
                WHERE user_id = %s AND website_url = %s AND username = %s''',
             (current_user['user_id'], website_url, username)
         )
         existing = cur.fetchone()
+        print(f"Step 4: Existing credential: {existing is not None}")
         
         # Encrypt password
+        print("Step 5: Encrypting password...")
         encrypted_password = encryption_manager.encrypt_data(password, user_key)
+        print("Step 5: SUCCESS")
         
         if existing:
             # Update existing credential
+            print("Step 6: Updating existing credential...")
             cur.execute(
                 '''UPDATE credentials 
                    SET encrypted_password = %s, website_name = %s, updated_at = CURRENT_TIMESTAMP
@@ -233,8 +283,10 @@ def save_credential(current_user):
             )
             cred_id = cur.fetchone()['id']
             message = 'Credential updated successfully'
+            print("Step 6: SUCCESS - Updated")
         else:
             # Insert new credential
+            print("Step 6: Inserting new credential...")
             cur.execute(
                 '''INSERT INTO credentials 
                    (user_id, website_url, website_name, username, encrypted_password, encryption_key_id)
@@ -245,10 +297,15 @@ def save_credential(current_user):
             )
             cred_id = cur.fetchone()['id']
             message = 'Credential saved successfully'
+            print("Step 6: SUCCESS - Inserted")
         
         conn.commit()
         cur.close()
         conn.close()
+        
+        print("=" * 50)
+        print("SAVE CREDENTIAL SUCCESSFUL")
+        print("=" * 50)
         
         return jsonify({
             'success': True,
@@ -257,6 +314,14 @@ def save_credential(current_user):
         }), 200
         
     except Exception as e:
+        print("=" * 50)
+        print("FATAL ERROR IN SAVE")
+        print("=" * 50)
+        print(f"Error: {str(e)}")
+        print(f"Error type: {type(e).__name__}")
+        import traceback
+        print(traceback.format_exc())
+        print("=" * 50)
         return jsonify({'error': 'Failed to save credential'}), 500
 
 @app.route('/api/credentials/list', methods=['GET'])

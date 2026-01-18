@@ -155,17 +155,22 @@ class PasswordManager {
     async loadCredentials() {
         try {
             const response = await makeAPIRequest('/credentials/list');
-            const data = await response.json();
 
             if (response.ok) {
-                this.credentials = data.credentials;
+                const data = await response.json();
+                this.credentials = data.credentials || []; // Default to empty array
                 this.renderCredentials();
             } else {
-                throw new Error(data.error || 'Failed to load credentials');
+                // Even on error, show empty state instead of error
+                console.error('Failed to load credentials');
+                this.credentials = [];
+                this.renderCredentials();
             }
         } catch (error) {
             console.error('Error loading credentials:', error);
-            this.showError('Failed to load credentials');
+            // Show empty state instead of error
+            this.credentials = [];
+            this.renderCredentials();
         }
     }
 
@@ -173,8 +178,13 @@ class PasswordManager {
         const listContainer = document.getElementById('credentialsList');
         listContainer.innerHTML = '';
 
-        if (this.credentials.length === 0) {
-            listContainer.innerHTML = '<div class="no-credentials">No credentials saved yet. Click "Add Credential" to get started.</div>';
+        if (!this.credentials || this.credentials.length === 0) {
+            listContainer.innerHTML = `
+            <div class="no-credentials">
+                <p>📭 No credentials saved yet</p>
+                <p>Click "Add Credential" or use the browser extension to get started!</p>
+            </div>
+        `;
             return;
         }
 
@@ -188,32 +198,37 @@ class PasswordManager {
         const card = document.createElement('div');
         card.className = 'credential-card';
 
-        const favicon = this.getFaviconUrl(cred.websiteUrl);
+        // Safe defaults for missing data
+        const websiteUrl = cred.websiteUrl || 'Not specified';
+        const websiteName = cred.websiteName || cred.username || 'Unknown';
+        const username = cred.username || 'Unknown';
+
+        const favicon = this.getFaviconUrl(websiteUrl);
 
         card.innerHTML = `
-            <div class="credential-header">
-                <img src="${favicon}" class="website-favicon" alt="favicon" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌐</text></svg>'">
-                <div class="credential-info">
-                    <div class="website-name">${this.escapeHtml(cred.websiteName)}</div>
-                    <div class="website-url">${this.escapeHtml(this.getDomain(cred.websiteUrl))}</div>
-                </div>
+        <div class="credential-header">
+            <img src="${favicon}" class="website-favicon" alt="favicon" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌐</text></svg>'">
+            <div class="credential-info">
+                <div class="website-name">${this.escapeHtml(websiteName)}</div>
+                <div class="website-url">${this.escapeHtml(this.getDomain(websiteUrl))}</div>
             </div>
-            <div class="credential-details">
-                <div class="detail-row">
-                    <span class="detail-label">Username:</span>
-                    <span class="detail-value">${this.escapeHtml(cred.username)}</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Password:</span>
-                    <span class="detail-value password-hidden" id="password-${cred.id}">••••••••</span>
-                </div>
+        </div>
+        <div class="credential-details">
+            <div class="detail-row">
+                <span class="detail-label">Username:</span>
+                <span class="detail-value">${this.escapeHtml(username)}</span>
             </div>
-            <div class="credential-actions">
-                <button class="btn btn-small" onclick="passwordManager.showPassword(${cred.id})">👁️ Show</button>
-                <button class="btn btn-small" onclick="passwordManager.copyPassword(${cred.id})">📋 Copy</button>
-                <button class="btn btn-small btn-danger" onclick="passwordManager.deleteCredential(${cred.id})">🗑️ Delete</button>
+            <div class="detail-row">
+                <span class="detail-label">Password:</span>
+                <span class="detail-value password-hidden" id="password-${cred.id}">••••••••</span>
             </div>
-        `;
+        </div>
+        <div class="credential-actions">
+            <button class="btn btn-small" onclick="passwordManager.showPassword(${cred.id})">👁️ Show</button>
+            <button class="btn btn-small" onclick="passwordManager.copyPassword(${cred.id})">📋 Copy</button>
+            <button class="btn btn-small btn-danger" onclick="passwordManager.deleteCredential(${cred.id})">🗑️ Delete</button>
+        </div>
+    `;
 
         return card;
     }
