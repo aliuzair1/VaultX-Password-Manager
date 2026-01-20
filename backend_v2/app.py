@@ -97,7 +97,7 @@ def token_required(f):
 
 def get_user_key(conn, user_id):
     """Get or create encryption key for user"""
-    cur = conn.cursor(cursor_factory=RealDictCursor)
+    cur = conn.cursor(row_factory=dict_row)  # ← Changed from cursor_factory=RealDictCursor
     
     cur.execute('SELECT id, key_data FROM encryption_keys WHERE user_id = %s', (user_id,))
     key_record = cur.fetchone()
@@ -113,7 +113,8 @@ def get_user_key(conn, user_id):
             'INSERT INTO encryption_keys (user_id, key_data) VALUES (%s, %s) RETURNING id',
             (user_id, user_key_encrypted)
         )
-        key_id = cur.fetchone()['id']
+        key_result = cur.fetchone()
+        key_id = key_result['id']
         conn.commit()
     else:
         key_id = key_record['id']
